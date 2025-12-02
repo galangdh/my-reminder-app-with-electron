@@ -22,15 +22,26 @@ const nextMonthBtn = document.getElementById('nextMonth');
 // --- Bagian Timer ---
 let timerInterval;
 let timeLeft;
-let endTime; // Variabel baru untuk target waktu (agar akurat)
-let isWorking = true; // true = kerja, false = istirahat
+let endTime; 
+let isWorking = true; 
 
+// --- AUDIO CUSTOM ---
+const customAlarm = new Audio('alarm.mp3'); 
+
+// Input Target Sesi
+const focusInput = document.getElementById('focusTask');
+
+// Elemen Timer & Statistik
 const timerDisplay = document.getElementById('timerDisplay');
 const timerBadge = document.getElementById('timerMode');
 const btnStart = document.getElementById('btnStartTimer');
 const btnReset = document.getElementById('btnResetTimer');
 const workInput = document.getElementById('workInput');
 const breakInput = document.getElementById('breakInput');
+
+// [BARU] Elemen Statistik
+const statSessionsDisplay = document.getElementById('statSessions');
+const statMinutesDisplay = document.getElementById('statMinutes');
 
 
 // ==========================================
@@ -137,10 +148,9 @@ if(btnSave) {
 
 
 // ==========================================
-// 3. LOGIKA TIMER (FOCUS TIMER - AUTO LOOP)
+// 3. LOGIKA TIMER & STATISTIK
 // ==========================================
 
-// Helper: Update Badge Warna
 function updateBadgeUI() {
     if (isWorking) {
         timerBadge.innerText = "🔥 FOKUS KERJA";
@@ -150,10 +160,11 @@ function updateBadgeUI() {
         timerBadge.innerText = "☕ ISTIRAHAT";
         timerBadge.style.background = "#55efc4";
         timerBadge.style.color = "#00b894";
+        
+        if(focusInput) focusInput.style.opacity = "0.5"; 
     }
 }
 
-// Helper: Update Layar Angka
 function updateScreen(seconds) {
     if(!timerDisplay) return;
     const m = Math.floor(seconds / 60);
@@ -161,12 +172,20 @@ function updateScreen(seconds) {
     timerDisplay.innerText = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
 }
 
-// Helper: Reset timer ke durasi awal (tanpa start)
 function resetTimerToInput() {
     if(!workInput || !breakInput) return;
     const mins = isWorking ? workInput.value : breakInput.value;
     timeLeft = mins * 60; 
     updateScreen(timeLeft);
+}
+
+// [BARU] Fungsi Load Stats
+async function loadStats() {
+    if(window.api && window.api.getStats) {
+        const stats = await window.api.getStats();
+        if(statSessionsDisplay) statSessionsDisplay.innerText = stats.sessions;
+        if(statMinutesDisplay) statMinutesDisplay.innerText = stats.minutes;
+    }
 }
 
 // TOMBOL START / PAUSE
@@ -176,68 +195,88 @@ if(btnStart) {
             // --- KLIK PAUSE ---
             clearInterval(timerInterval);
             timerInterval = null;
-            btnStart.innerHTML = '<i class="bi bi-play-fill"></i>'; 
+            btnStart.innerHTML = '<i class="bi bi-play-fill"></i>';
+            if(focusInput) focusInput.disabled = false;
         } else { 
             // --- KLIK START ---
-            
-            // 1. Ambil durasi jika belum ada
+            if(focusInput) {
+                focusInput.disabled = true;
+                focusInput.style.opacity = "1";
+            }
+
             if (!timeLeft || timeLeft <= 0) resetTimerToInput();
             
-            // 2. Set Target Waktu (Ini kuncinya biar gak telat pas minimize)
-            // Target = Waktu Sekarang + Sisa Detik
             endTime = Date.now() + (timeLeft * 1000);
-
-            // 3. Update UI
             updateBadgeUI();
             btnStart.innerHTML = '<i class="bi bi-pause-fill"></i>';
 
-            // 4. Jalankan Interval
             timerInterval = setInterval(() => {
-                // Hitung selisih waktu sistem (Lebih akurat daripada timeLeft--)
                 const now = Date.now();
                 const secondsRemaining = Math.ceil((endTime - now) / 1000);
                 
-                // Update variabel global
                 timeLeft = secondsRemaining;
                 updateScreen(timeLeft);
 
                 // --- JIKA WAKTU HABIS (00:00) ---
                 if (timeLeft <= 0) {
-                    // A. Bunyikan Notifikasi
-                    const msg = isWorking ? "Kerja selesai! Istirahat dulu." : "Istirahat selesai! Ayo kerja.";
+                    
+                    // 1. Suara
+                    customAlarm.currentTime = 0; 
+                    customAlarm.play().catch(e => console.log("Gagal memutar audio:", e));
+
+                    // 2. Notifikasi Visual
+                    const targetText = focusInput ? focusInput.value : "Sesi";
+                    const msg = isWorking ? `Selesai: ${targetText}. Istirahat dulu!` : "Istirahat selesai! Lanjut fokus.";
                     if(window.api && window.api.timerDone) window.api.timerDone(msg);
 
-                    // B. Tukar Mode
+                    // ===============================================
+                    // [BARU] SIMPAN STATISTIK JIKA KERJA SELESAI
+                    // ===============================================
+                    if (isWorking) {
+                        const minsWorked = parseInt(workInput.value);
+                        if(window.api && window.api.saveStats) {
+                            window.api.saveStats(minsWorked);
+                            loadStats(); // Update UI langsung
+                        }
+                    }
+                    // ===============================================
+
+                    // 3. Tukar Mode & Lanjut Loop
                     isWorking = !isWorking; 
-                    
-                    // C. Ambil Durasi Baru
                     const mins = isWorking ? workInput.value : breakInput.value;
                     const nextSeconds = mins * 60;
                     
-                    // D. SET ULANG Target Waktu (AUTO START / LOOP)
-                    // Jangan clearInterval, kita langsung tembak target baru
                     endTime = Date.now() + (nextSeconds * 1000);
-                    
-                    // E. Update UI Badge
                     updateBadgeUI();
                     
-                    // Timer akan terus lanjut menghitung mundur dari durasi baru...
+                    if(focusInput) {
+                        if(!isWorking) focusInput.style.opacity = "0.5";
+                        else focusInput.style.opacity = "1";
+                    }
                 }
             }, 1000);
         }
     });
 }
 
-// TOMBOL RESET (RESTART)
+// TOMBOL RESET
 if(btnReset) {
     btnReset.addEventListener('click', () => {
         clearInterval(timerInterval);
         timerInterval = null;
         
-        isWorking = true; // Kembali ke kerja
-        resetTimerToInput(); // Reset angka
+        customAlarm.pause();
+        customAlarm.currentTime = 0;
+
+        isWorking = true; 
+        resetTimerToInput(); 
         
-        // Reset UI
+        if(focusInput) {
+            focusInput.disabled = false;
+            focusInput.value = ""; 
+            focusInput.style.opacity = "1";
+        }
+        
         timerBadge.innerText = "Siap Mulai";
         timerBadge.style.background = "#dfe6e9";
         timerBadge.style.color = "#2d3436";
@@ -249,6 +288,38 @@ if(btnReset) {
 if(workInput) workInput.addEventListener('change', () => { if(isWorking && !timerInterval) resetTimerToInput() });
 if(breakInput) breakInput.addEventListener('change', () => { if(!isWorking && !timerInterval) resetTimerToInput() });
 
-// Inisialisasi
+
+// ==========================================
+// 4. FITUR DARK MODE
+// ==========================================
+const btnTheme = document.getElementById('btnThemeToggle');
+const body = document.body;
+
+const savedTheme = localStorage.getItem('theme');
+if (savedTheme === 'dark') {
+    body.setAttribute('data-theme', 'dark');
+    if(btnTheme) btnTheme.innerHTML = '<i class="bi bi-sun-fill"></i>';
+}
+
+if(btnTheme) {
+    btnTheme.addEventListener('click', () => {
+        const isDark = body.getAttribute('data-theme') === 'dark';
+
+        if (isDark) {
+            body.removeAttribute('data-theme');
+            localStorage.setItem('theme', 'light');
+            btnTheme.innerHTML = '<i class="bi bi-moon-fill"></i>';
+        } else {
+            body.setAttribute('data-theme', 'dark');
+            localStorage.setItem('theme', 'dark');
+            btnTheme.innerHTML = '<i class="bi bi-sun-fill"></i>';
+        }
+    });
+}
+
+// ==========================================
+// 5. INISIALISASI AWAL
+// ==========================================
 renderCalendar();
 resetTimerToInput();
+loadStats(); // [BARU] Load data statistik saat aplikasi dibuka

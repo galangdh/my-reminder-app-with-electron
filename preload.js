@@ -6,6 +6,10 @@ contextBridge.exposeInMainWorld('api', {
     deleteReminder: (id) => ipcRenderer.send('delete-reminder', id),
     onLoadReminders: (callback) => ipcRenderer.on('load-reminders', (event, data) => callback(data)),
     
-    // Timer (BARU)
-    timerDone: (message) => ipcRenderer.send('timer-done', message)
+// ... kode lama ...
+    timerDone: (message) => ipcRenderer.send('timer-done', message), // Jangan hapus yg ini
+    
+    // [BARU] Statistik
+    getStats: () => ipcRenderer.invoke('get-stats'),
+    saveStats: (minutes) => ipcRenderer.send('save-stats', minutes)
 });

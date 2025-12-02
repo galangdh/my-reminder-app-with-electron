@@ -109,5 +109,30 @@ ipcMain.on('delete-reminder', (event, id) => {
 
 // --- FITUR TIMER (Notifikasi Saja) ---
 ipcMain.on('timer-done', (event, message) => {
-    new Notification({ title: "⏱️ Timer Selesai!", body: message }).show();
+    new Notification({ 
+        title: "⏱️ Timer Selesai!", 
+        body: message,
+        silent: true // Tambahkan ini agar tidak bunyi "Ting" Windows
+    }).show();
+});
+
+
+// --- FITUR STATISTIK (BARU) ---
+
+// 1. Ambil Data Statistik (Request dari Frontend)
+ipcMain.handle('get-stats', () => {
+    // Default: 0 sesi, 0 menit
+    const defaultStats = { sessions: 0, minutes: 0 };
+    return store.get('stats') || defaultStats;
+});
+
+// 2. Simpan Data Statistik (Dikirim saat timer habis)
+ipcMain.on('save-stats', (event, minutesWorked) => {
+    const currentStats = store.get('stats') || { sessions: 0, minutes: 0 };
+    
+    // Update data
+    currentStats.sessions += 1;
+    currentStats.minutes += parseInt(minutesWorked);
+    
+    store.set('stats', currentStats);
 });
