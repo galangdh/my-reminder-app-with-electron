@@ -1,6 +1,11 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('api', {
-    // Fungsi untuk mengirim data reminder ke main process
-    setReminder: (title, seconds) => ipcRenderer.send('set-reminder', { title, seconds })
+    // Reminder
+    setReminder: (title, date, time) => ipcRenderer.send('set-reminder', { title, date, time }),
+    deleteReminder: (id) => ipcRenderer.send('delete-reminder', id),
+    onLoadReminders: (callback) => ipcRenderer.on('load-reminders', (event, data) => callback(data)),
+    
+    // Timer (BARU)
+    timerDone: (message) => ipcRenderer.send('timer-done', message)
 });

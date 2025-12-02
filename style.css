@@ -1,0 +1,265 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background: #f4f7f6;
+    margin: 0;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    /* Layout Kiri-Kanan */
+}
+
+/* --- SIDEBAR (MENU KIRI) --- */
+.sidebar {
+    width: 80px;
+    background: #ffffff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 30px;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05);
+    z-index: 10;
+}
+
+.nav-btn {
+    width: 50px;
+    height: 50px;
+    border-radius: 15px;
+    border: none;
+    background: transparent;
+    color: #b2bec3;
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.nav-btn:hover {
+    background: #dfe6e9;
+    color: #6c5ce7;
+}
+
+.nav-btn.active {
+    background: #6c5ce7;
+    color: white;
+    box-shadow: 0 4px 15px rgba(108, 92, 231, 0.4);
+}
+
+/* --- KONTEN UTAMA (KANAN) --- */
+.content-area {
+    flex-grow: 1;
+    padding: 30px;
+    overflow-y: auto;
+    display: none;
+    /* Default sembunyi */
+}
+
+.content-area.active {
+    display: block;
+    /* Muncul jika aktif */
+    animation: fadeIn 0.4s;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* --- STYLE UNTUK FITUR 1: REMINDER --- */
+.reminder-card {
+    background: white;
+    border-radius: 20px;
+    padding: 25px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
+    height: 100%;
+    /* Agar tinggi menyesuaikan panel */
+}
+
+.custom-input {
+    background: #f1f2f6;
+    border: none;
+    padding: 12px;
+    border-radius: 10px;
+    margin-bottom: 10px;
+}
+
+.reminder-item {
+    background: white;
+    padding: 15px;
+    margin-bottom: 10px;
+    border-radius: 12px;
+    border-left: 5px solid #6c5ce7;
+    /* Garis ungu di kiri */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* --- STYLE UNTUK FITUR 2: TIMER --- */
+.timer-container {
+    text-align: center;
+    background: white;
+    border-radius: 20px;
+    padding: 40px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
+}
+
+.timer-display {
+    font-size: 4rem;
+    font-weight: 700;
+    color: #2d3436;
+    margin: 20px 0;
+    font-variant-numeric: tabular-nums;
+    /* Supaya angka tidak goyang */
+}
+
+.timer-mode-badge {
+    background: #ffeaa7;
+    color: #d63031;
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+}
+
+.btn-circle {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    border: none;
+    font-size: 1.2rem;
+    margin: 0 10px;
+    transition: 0.2s;
+}
+
+/* --- KALENDER KUSTOM --- */
+.calendar-wrapper {
+    background: white;
+    border-radius: 20px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.03);
+}
+
+.calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    font-weight: 700;
+    color: #2d3436;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.btn-cal-nav {
+    background: #f1f2f6;
+    border: none;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: 0.2s;
+    color: #636e72;
+}
+
+.btn-cal-nav:hover {
+    background: #dfe6e9;
+    color: #2d3436;
+}
+
+/* Grid Hari (Minggu - Sabtu) */
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    /* 7 Kolom */
+    gap: 5px;
+    text-align: center;
+}
+
+.day-name {
+    font-size: 0.75rem;
+    color: #b2bec3;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+.calendar-day {
+    height: 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    position: relative;
+    /* Untuk posisi titik */
+    transition: 0.2s;
+}
+
+.calendar-day:hover {
+    background-color: #f8f9fa;
+    color: #6c5ce7;
+}
+
+.calendar-day.today {
+    background-color: #6c5ce7;
+    color: white;
+    font-weight: bold;
+}
+
+/* TANDA KHUSUS: Jika ada event */
+.calendar-day.has-event::after {
+    content: '';
+    width: 5px;
+    height: 5px;
+    background-color: #fd79a8;
+    /* Titik Merah Muda */
+    border-radius: 50%;
+    position: absolute;
+    bottom: 5px;
+}
+
+/* Jika hari ini ada event, titiknya jadi putih biar kelihatan */
+.calendar-day.today.has-event::after {
+    background-color: white;
+}
+
+/* --- BARU: LAYOUT SPLIT (KALENDER KIRI - FORM KANAN) --- */
+.split-layout {
+    display: flex;
+    /* Aktifkan mode baris */
+    gap: 25px;
+    /* Jarak antara kalender dan form */
+    align-items: flex-start;
+    /* Supaya tinggi kotak mengikuti isinya */
+    margin-bottom: 20px;
+}
+
+/* Kalender mengambil porsi lebih luas (60%) */
+.left-panel {
+    flex: 3;
+}
+
+/* Form mengambil porsi sisanya (40%) */
+.right-panel {
+    flex: 2;
+}
+
+/* Responsif: Jika layar dikecilkan, kembali menumpuk ke bawah */
+@media (max-width: 900px) {
+    .split-layout {
+        flex-direction: column;
+    }
+}
